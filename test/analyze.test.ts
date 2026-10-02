@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { analyzeExtractions } from "../src/pipeline/analyze";
 import { loadDefaultConfig } from "../src/config/load";
+import { parseConfig } from "../src/config/config";
 import { analyze2, ex, f, passbook, salesRaw, testConfig } from "./helpers";
 
 const TODAY = "2026-09-29";
@@ -97,8 +98,10 @@ describe("画像解析の安全装置", () => {
     expect(codes(r)).toContain("STORE_MISMATCH");
   });
 
-  it("書式未登録の店舗は必ず要確認（本番の初期設定）", () => {
-    const r = analyze2(salesRaw({ businessDate: "2026/9/28", deposit: 1000, rows: passbook(0, [["08-09-29", 1000]]) }), "kyodaimae", TODAY, loadDefaultConfig());
+  it("書式未登録の店舗は必ず要確認", () => {
+    const raw = structuredClone(loadDefaultConfig()) as any;
+    raw.stores.find((s: any) => s.id === "kyodaimae").receipt.labels = null;
+    const r = analyze2(salesRaw({ businessDate: "2026/9/28", deposit: 1000, rows: passbook(0, [["08-09-29", 1000]]) }), "kyodaimae", TODAY, parseConfig(raw));
     expect(codes(r)).toContain("RECEIPT_FORMAT_UNREGISTERED");
   });
 

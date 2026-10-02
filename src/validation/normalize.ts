@@ -1,7 +1,7 @@
 import type { AppConfig, StoreConfig, YearFormat } from "../config/config";
 import { bankOf } from "../config/config";
 import { addDays, diffDays, resolveYear, toISODate, type ISODate } from "../domain/calendar";
-import { parseAmount, splitDateParts } from "../domain/text";
+import { normalizeLabel, parseAmount, redactAccountNumbers, splitDateParts } from "../domain/text";
 import type { Field, RawExtraction } from "../extraction/schema";
 import { review, unreadable, type Issue } from "./issues";
 
@@ -11,6 +11,8 @@ export interface PassbookLine {
   lineNo: string;
   /** 日付・金額・残高がすべて確実に読めた行だけ true */
   legible: boolean;
+  /** 残高だけは確実に読めた（「繰越」行など、次の行の残高検算の起点に使える） */
+  balanceOk: boolean;
   date: ISODate | null;
   deposit: number | null;
   withdrawal: number | null;
@@ -144,18 +146,21 @@ function normalizeRows(ctx: Ctx, raw: RawExtraction, fmt: YearFormat): PassbookL
     const deposit = amount(r.deposit, "お預り");
     const withdrawal = amount(r.withdrawal, "お支払");
     const balanceField = r.balance;
+    const before = problems.length;
     const balance = balanceField.legibility === "empty" ? null : amount(balanceField, "残高");
     if (balanceField.legibility === "empty") problems.push("残高: 空欄");
+    const balanceOk = balance !== null && problems.length === before;
     return {
       index,
       lineNo: r.line_no,
       legible: problems.length === 0,
+      balanceOk,
       date,
       deposit,
       withdrawal,
       balance,
-      description: r.description,
-      note: r.handwritten_note,
+      description: redactAccountNumbers(r.description),
+      note: redactAccountNumbers(r.handwritten_note),
       disputed: false,
       chainVerified: false,
       problems,
@@ -184,10 +189,11 @@ export function normalizeExtraction(
       ctx.issues.push(unreadable("NO_REGISTER_REPORT", "レジ精算票が読み取れない"));
       return { doc: null, issues: ctx.issues };
     }
-    if (store.receipt.depositLabel === null) {
-      ctx.issues.push(review("RECEIPT_FORMAT_UNREGISTERED", `${store.name}のレジ精算票の書式が未登録（入金対象の項目名が未設定）`));
-    } else if (rr.deposit_amount_label.replace(/\s/g, "") !== store.receipt.depositLabel) {
-      ctx.issues.push(review("DEPOSIT_LABEL_MISMATCH", `入金対象額の項目名が設定（${store.receipt.depositLabel}）と違う`));
+    const labels = store.receipt.labels;
+    if (labels === null) {
+      ctx.issues.push(review("RECEIPT_FORMAT_UNREGISTERED", `${store.name}のレジ精算票の書式が未登録`));
+    } else if (normalizeLabel(rr.deposit_amount_label) !== normalizeLabel(labels.deposit)) {
+      ctx.issues.push(review("DEPOSIT_LABEL_MISMATCH", `入金対象額の項目名が設定（${labels.deposit}）と違う`));
     }
     const businessDate = requiredDate(ctx, rr.business_date, "営業日", store.receipt.yearFormat);
     const depositAmount = requiredAmount(ctx, rr.deposit_amount, "入金対象額");
@@ -195,7 +201,8 @@ export function normalizeExtraction(
     const nextDayFloat = optionalAmount(ctx, rr.next_day_float, "翌準備金");
     let denominations: number[] | null = null;
     if (rr.denominations.length > 0) {
-      const vals = rr.denominations.map((d) => requiredAmount(ctx, d.amount, `金種(${d.label})`));
+      // 0枚の金種は「-」や空欄で印字される書式がある（funfo）。空欄は0円として扱う
+      const vals = rr.denominations.map((d) => (d.amount.legibility === "empty" ? 0 : requiredAmount(ctx, d.amount, `金種(${d.label})`)));
       denominations = vals.every((v): v is number => v !== null) ? vals : null;
     }
     if (businessDate === null || depositAmount === null) return { doc: null, issues: ctx.issues };

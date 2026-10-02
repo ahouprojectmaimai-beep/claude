@@ -31,6 +31,9 @@ npm run typecheck   # 型チェック
 # 実画像をClaudeで解析（APIキーは環境変数で渡す。コードやGitには書かない）
 ANTHROPIC_API_KEY=... npm run analyze -- --store doshisha --today 2026-09-29 --image testdata/private/photo.jpg --save-dir testdata/private/out
 
+# 実画像の正解データ（testdata/private/cases.json）をまとめて再現（APIキー不要）
+npx tsx scripts/replay-cases.ts
+
 # 保存した抽出結果から判定を再現（APIキー不要）
 npm run replay -- --store doshisha --today 2026-09-29 --a testdata/private/out/xxx.json
 ```

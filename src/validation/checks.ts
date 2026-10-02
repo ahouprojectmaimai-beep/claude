@@ -16,7 +16,8 @@ export function verifyBalanceChain(rows: PassbookLine[]): PassbookLine[] {
   const main = rows.filter((r) => r.index >= 0);
   const links = main.map((r, i) => {
     const prev = main[i - 1];
-    if (!usable(r) || !usable(prev)) return false;
+    // 前の行は残高だけ確実なら起点にできる（「繰越」行など）
+    if (!usable(r) || !prev || !prev.balanceOk || prev.disputed || prev.balance === null) return false;
     return prev.balance + r.deposit - r.withdrawal === r.balance;
   });
   const verified = main.map((r, i) => {

@@ -80,13 +80,17 @@ export function ex(raw: RawExtraction | null, id = "A", error: string | null = n
 /** 全店舗の書式を登録済みにしたテスト用設定（本番設定は書式未登録の店舗あり） */
 export function testConfig(overrides: (raw: any) => void = () => {}): AppConfig {
   const raw = structuredClone(loadDefaultConfig()) as any;
+  // テストでは全店舗をアホウどり書式・検算なしで扱う（検算ありは同志社前のシナリオで確認）
   for (const s of raw.stores) {
-    if (s.receipt.depositLabel === null) {
-      s.receipt.depositLabel = "預入金";
+    if (s.id !== "doshisha") {
+      s.receipt.labels = { ...s.receipt.labels, deposit: "預入金" };
+      s.receipt.checks = [];
       s.receipt.allowWithoutChecks = true;
     }
   }
   raw.cashCheck.clerkUserIds = ["U_clerk"];
+  // テストデータの通帳摘要は銀行を問わず "ATM"（銀行ごとの摘要の判定は専用テストで確認）
+  for (const b of Object.values(raw.banks) as any[]) b.depositDescriptions = [...b.depositDescriptions, "ATM"];
   overrides(raw);
   return parseConfig(raw);
 }

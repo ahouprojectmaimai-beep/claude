@@ -33,6 +33,20 @@ export const ReceiptCheck = z.enum([
 ]);
 export type ReceiptCheck = z.infer<typeof ReceiptCheck>;
 
+export const ReceiptLabels = z.object({
+  /** 営業日を表す項目（例: 営業日、レポート期間） */
+  businessDate: z.string().min(1),
+  /** 銀行入金対象額（例: 預入金、銀行入金額） */
+  deposit: z.string().min(1),
+  /** レジ内の現金合計（例: 在高実績、現金残高(点検)） */
+  cashOnHand: z.string().min(1),
+  /** 翌日の釣銭準備金（例: 翌準備金、繰越準備金） */
+  nextDayFloat: z.string().min(1),
+  /** 金種別の内訳の見出し（例: 1円硬貨〜1万円紙幣、点検金種） */
+  denominations: z.string().min(1),
+});
+export type ReceiptLabels = z.infer<typeof ReceiptLabels>;
+
 const StoreConfig = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -40,8 +54,8 @@ const StoreConfig = z.object({
   bank: z.string().min(1),
   coinPolicy: CoinPolicy,
   receipt: z.object({
-    /** 日計表で「銀行入金対象額」を表す項目名。null は書式未登録（必ず要確認） */
-    depositLabel: z.string().min(1).nullable(),
+    /** レジ精算票の項目名（印字どおり）。null は書式未登録（必ず要確認） */
+    labels: ReceiptLabels.nullable(),
     yearFormat: YearFormat,
     checks: z.array(ReceiptCheck),
     /**
@@ -56,7 +70,15 @@ export type StoreConfig = z.infer<typeof StoreConfig>;
 export const AppConfigSchema = z
   .object({
     billUnit: z.number().int().positive(),
-    banks: z.record(z.string(), z.object({ name: z.string(), yearFormat: YearFormat })),
+    banks: z.record(
+      z.string(),
+      z.object({
+        name: z.string(),
+        yearFormat: YearFormat,
+        /** 売上・廃油の入金として扱う摘要（例: ATM）。振込などはこれに含めない */
+        depositDescriptions: z.array(z.string().min(1)).min(1),
+      }),
+    ),
     stores: z.array(StoreConfig).min(1),
     oilReceipt: z.object({
       yearFormat: YearFormat,
@@ -84,7 +106,7 @@ export const AppConfigSchema = z
       if (ids.has(s.id)) ctx.addIssue({ code: "custom", message: `店舗IDが重複: ${s.id}` });
       ids.add(s.id);
       if (!cfg.banks[s.bank]) ctx.addIssue({ code: "custom", message: `未定義の銀行: ${s.bank} (${s.id})` });
-      if (s.receipt.depositLabel !== null && s.receipt.checks.length === 0 && !s.receipt.allowWithoutChecks) {
+      if (s.receipt.labels !== null && s.receipt.checks.length === 0 && !s.receipt.allowWithoutChecks) {
         ctx.addIssue({ code: "custom", message: `${s.name}: レジ精算票の検算(checks)が未設定。誤読対策のため必須` });
       }
     }

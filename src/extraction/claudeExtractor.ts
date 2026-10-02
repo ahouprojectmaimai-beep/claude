@@ -48,7 +48,7 @@ export class ClaudeExtractor implements Extractor {
             role: "user",
             content: [
               { type: "image", source: { type: "base64", media_type: req.mediaType, data: req.imageBase64 } },
-              { type: "text", text: buildPrompt(this.variant, req.depositLabel) },
+              { type: "text", text: buildPrompt(this.variant, req.receiptLabels) },
             ],
           },
         ],

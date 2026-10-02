@@ -1,59 +1,163 @@
 {
-  "$comment": "店舗ごとのルール。コードを変えずにここを編集して運用ルールを変更する。receipt.depositLabel が null の店舗は書式未登録として必ず「要確認」になる。",
+  "$comment": "店舗ごとのルール。コードを変えずにここを編集して運用ルールを変更する。receipt.labels が null の店舗は書式未登録として必ず「要確認」になる。",
   "billUnit": 1000,
   "banks": {
-    "kyoto_bank": { "name": "京都銀行", "yearFormat": "reiwa2" },
-    "kyoto_shinkin": { "name": "京都信用金庫", "yearFormat": "reiwa2" },
-    "kyoto_chuo_shinkin": { "name": "京都中央信用金庫", "yearFormat": "reiwa2" }
+    "kyoto_bank": {
+      "name": "京都銀行",
+      "yearFormat": "reiwa2",
+      "depositDescriptions": [
+        "ATM"
+      ]
+    },
+    "kyoto_shinkin": {
+      "name": "京都信用金庫",
+      "yearFormat": "reiwa2",
+      "depositDescriptions": [
+        "ATM通帳"
+      ]
+    },
+    "kyoto_chuo_shinkin": {
+      "name": "京都中央信用金庫",
+      "yearFormat": "reiwa2",
+      "depositDescriptions": [
+        "預金機"
+      ]
+    }
   },
   "stores": [
     {
       "id": "hakubaicho",
       "name": "白梅町店",
-      "aliases": ["白梅町", "北野白梅町"],
+      "aliases": [
+        "白梅町",
+        "北野白梅町"
+      ],
       "bank": "kyoto_bank",
       "coinPolicy": "SAME_DAY",
-      "receipt": { "depositLabel": null, "yearFormat": "western4", "checks": [] }
+      "receipt": {
+        "labels": {
+          "businessDate": "営業日",
+          "deposit": "預入金",
+          "cashOnHand": "在高実績",
+          "nextDayFloat": "翌準備金",
+          "denominations": "1円硬貨〜1万円紙幣の各行"
+        },
+        "yearFormat": "western4",
+        "checks": [
+          "denominationsSum",
+          "onHandMinusFloat"
+        ]
+      }
     },
     {
       "id": "shogoin",
       "name": "聖護院店",
-      "aliases": ["聖護院"],
+      "aliases": [
+        "聖護院"
+      ],
       "bank": "kyoto_bank",
       "coinPolicy": "SAME_DAY",
-      "receipt": { "depositLabel": null, "yearFormat": "western4", "checks": [] }
+      "receipt": {
+        "labels": {
+          "businessDate": "営業日",
+          "deposit": "預入金",
+          "cashOnHand": "在高実績",
+          "nextDayFloat": "翌準備金",
+          "denominations": "1円硬貨〜1万円紙幣の各行"
+        },
+        "yearFormat": "western4",
+        "checks": [
+          "denominationsSum",
+          "onHandMinusFloat"
+        ]
+      }
     },
     {
       "id": "kyodaimae",
       "name": "京大前店",
-      "aliases": ["京大前", "京大"],
+      "aliases": [
+        "京大前",
+        "京大"
+      ],
       "bank": "kyoto_chuo_shinkin",
       "coinPolicy": "DEFERRED",
-      "receipt": { "depositLabel": null, "yearFormat": "western4", "checks": [] }
+      "receipt": {
+        "labels": {
+          "businessDate": "営業日",
+          "deposit": "預入金",
+          "cashOnHand": "在高実績",
+          "nextDayFloat": "翌準備金",
+          "denominations": "1円硬貨〜1万円紙幣の各行"
+        },
+        "yearFormat": "western4",
+        "checks": [
+          "denominationsSum",
+          "onHandMinusFloat"
+        ]
+      }
     },
     {
       "id": "doshisha",
       "name": "同志社前店",
-      "aliases": ["同志社前", "同志社"],
+      "aliases": [
+        "同志社前",
+        "同志社"
+      ],
       "bank": "kyoto_bank",
       "coinPolicy": "CLERK_CHECK",
       "receipt": {
-        "depositLabel": "預入金",
+        "labels": {
+          "businessDate": "営業日",
+          "deposit": "預入金",
+          "cashOnHand": "在高実績",
+          "nextDayFloat": "翌準備金",
+          "denominations": "1円硬貨〜1万円紙幣の各行"
+        },
         "yearFormat": "western4",
-        "checks": ["denominationsSum", "onHandMinusFloat"]
+        "checks": [
+          "denominationsSum",
+          "onHandMinusFloat"
+        ]
       }
     },
     {
       "id": "horimaru",
       "name": "ほりまる",
-      "aliases": ["ほりまる", "堀丸", "からあげ本舗"],
+      "aliases": [
+        "ほりまる",
+        "堀川丸太町",
+        "からあげ本舗"
+      ],
       "bank": "kyoto_shinkin",
       "coinPolicy": "DEFERRED",
-      "receipt": { "depositLabel": null, "yearFormat": "western4", "checks": [] }
+      "receipt": {
+        "labels": {
+          "businessDate": "レポート期間",
+          "deposit": "銀行入金額",
+          "cashOnHand": "現金残高(点検)",
+          "nextDayFloat": "繰越準備金",
+          "denominations": "点検金種"
+        },
+        "yearFormat": "western4",
+        "checks": [
+          "denominationsSum",
+          "onHandMinusFloat"
+        ]
+      }
     }
   ],
-  "oilReceipt": { "yearFormat": "western2", "noteKeywords": ["油"] },
-  "excludedDescriptionKeywords": ["利息", "決算"],
+  "oilReceipt": {
+    "yearFormat": "western2",
+    "noteKeywords": [
+      "油"
+    ]
+  },
+  "excludedDescriptionKeywords": [
+    "利息",
+    "決算",
+    "振込",
+    "繰越"
+  ],
   "rules": {
     "depositGraceDays": 0,
     "coinMaxWaitBankDays": 3,

@@ -2,8 +2,8 @@ import type { NormalizedDocument, PassbookLine } from "./normalize";
 import { unreadable, type Issue } from "./issues";
 
 function rowKey(r: PassbookLine): string | null {
-  if (!r.legible) return null;
-  return `${r.date}|${r.deposit}|${r.withdrawal}|${r.balance}`;
+  if (!r.balanceOk) return null;
+  return `${r.date ?? "?"}|${r.deposit ?? "?"}|${r.withdrawal ?? "?"}|${r.balance}`;
 }
 
 /**

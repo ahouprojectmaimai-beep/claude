@@ -1,5 +1,6 @@
 import type { AppConfig, StoreConfig } from "../config/config";
-import { getStore } from "../config/config";
+import { bankOf, getStore } from "../config/config";
+import { normalizeLabel } from "../domain/text";
 import { addDays, type BankCalendar, type ISODate } from "../domain/calendar";
 import type { AnalysisResult } from "../pipeline/analyze";
 import type { OilDocument, PassbookLine, SalesDocument } from "../validation/normalize";
@@ -33,9 +34,12 @@ function isClean(ctx: EngineContext, r: PassbookLine): r is CleanRow {
   return true;
 }
 
-function isDepositRow(ctx: EngineContext, r: CleanRow): boolean {
+/** 売上・廃油の入金として扱える行か（ATM等の摘要のみ。振込・利息・繰越は対象外） */
+function isDepositRow(ctx: EngineContext, store: StoreConfig, r: CleanRow): boolean {
   if (r.deposit <= 0 || r.withdrawal !== 0) return false;
-  return !ctx.cfg.excludedDescriptionKeywords.some((k) => r.description.includes(k));
+  const desc = normalizeLabel(r.description);
+  if (ctx.cfg.excludedDescriptionKeywords.some((k) => desc.includes(normalizeLabel(k)))) return false;
+  return bankOf(ctx.cfg, store).depositDescriptions.some((k) => desc.includes(normalizeLabel(k)));
 }
 
 function hasOilNote(ctx: EngineContext, r: PassbookLine): boolean {
@@ -51,6 +55,8 @@ function uncertainRowsInWindow(ctx: EngineContext, rows: PassbookLine[], from: I
   const out: PassbookLine[] = [];
   main.forEach((r, i) => {
     if (isClean(ctx, r)) return;
+    // 2系統とも「お預り欄は空欄」と読んだ行（繰越・引き出しなど）は入金候補になり得ない
+    if (!r.disputed && r.balanceOk && r.deposit === 0) return;
     if (r.date !== null) {
       if (r.date >= from && r.date <= to) out.push(r);
       return;
@@ -65,8 +71,8 @@ function uncertainRowsInWindow(ctx: EngineContext, rows: PassbookLine[], from: I
   return out;
 }
 
-function availableRows(ctx: EngineContext, ledger: Ledger, storeId: string, rows: PassbookLine[]): CleanRow[] {
-  return rows.filter((r): r is CleanRow => isClean(ctx, r) && isDepositRow(ctx, r) && !ledger.assignments.has(fingerprint(storeId, r)));
+function availableRows(ctx: EngineContext, ledger: Ledger, store: StoreConfig, rows: PassbookLine[]): CleanRow[] {
+  return rows.filter((r): r is CleanRow => isClean(ctx, r) && isDepositRow(ctx, store, r) && !ledger.assignments.has(fingerprint(store.id, r)));
 }
 
 function deposit(storeId: string, r: CleanRow, kind: DepositAssignment["kind"], targetKey: string, sourceId: string): DepositAssignment {
@@ -79,7 +85,7 @@ function allocateInitial(ctx: EngineContext, ledger: Ledger, store: StoreConfig,
   if (rec.deposits.some((d) => d.kind === "INITIAL")) return;
   const from = addDays(rec.businessDate, 1);
   const to = addDays(from, ctx.cfg.rules.depositGraceDays);
-  const inWindow = availableRows(ctx, ledger, store.id, rows).filter((r) => r.date >= from && r.date <= to);
+  const inWindow = availableRows(ctx, ledger, store, rows).filter((r) => r.date >= from && r.date <= to);
   const uncertain = uncertainRowsInWindow(ctx, rows, from, to);
   const { bills, coins } = splitBillsCoins(rec.target, ctx.cfg.billUnit);
 
@@ -147,7 +153,7 @@ function allocateCoins(ctx: EngineContext, ledger: Ledger, store: StoreConfig, r
     .filter((x) => x.remaining > 0 && x.remaining < ctx.cfg.billUnit);
   if (open.length === 0) return;
 
-  const candidates = availableRows(ctx, ledger, store.id, rows).filter((r) => r.deposit < ctx.cfg.billUnit && !hasOilNote(ctx, r));
+  const candidates = availableRows(ctx, ledger, store, rows).filter((r) => r.deposit < ctx.cfg.billUnit && !hasOilNote(ctx, r));
   const fits = (o: (typeof open)[number], r: CleanRow) =>
     r.deposit === o.remaining && r.date > o.rec.businessDate && r.date <= coinDeadline(ctx, o.rec.businessDate);
 
@@ -175,7 +181,7 @@ function allocateOil(ctx: EngineContext, ledger: Ledger, store: StoreConfig, oil
   if (!oil || oil.deposit) return;
   const from = oil.receiptDate;
   const to = addDays(ctx.calendar.firstBankBusinessDayOnOrAfter(oil.receiptDate), ctx.cfg.rules.oilGraceDays);
-  const cands = availableRows(ctx, ledger, store.id, rows).filter((r) => r.deposit === oil.amount && r.date >= from && r.date <= to);
+  const cands = availableRows(ctx, ledger, store, rows).filter((r) => r.deposit === oil.amount && r.date >= from && r.date <= to);
   const noted = cands.filter((r) => hasOilNote(ctx, r));
   const pick = cands.length === 1 ? cands[0]! : noted.length === 1 ? noted[0]! : null;
   if (!pick) {

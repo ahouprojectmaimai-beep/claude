@@ -1,3 +1,13 @@
+/** 項目名・摘要の比較用（全角英数→半角、空白除去） */
+export function normalizeLabel(s: string): string {
+  return s.normalize("NFKC").replace(/\s+/g, "");
+}
+
+/** 口座番号らしき数字列を伏せる（保存・ログに残さない） */
+export function redactAccountNumbers(s: string): string {
+  return s.replace(/\d[\d-]{6,}\d/g, "＊＊＊");
+}
+
 /** 全角数字・記号を半角へ、空白を除去 */
 export function normalizeDigits(s: string): string {
   return s

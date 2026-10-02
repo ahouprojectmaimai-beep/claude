@@ -1,8 +1,10 @@
+import type { ReceiptLabels } from "../config/config";
+
 /**
  * 抽出プロンプト。変更したら PROMPT_VERSION を上げる（監査ログで追跡するため）。
  * 2系統の独立抽出で読み方の癖が重ならないよう、variant ごとに読み取り手順を変えている。
  */
-export const PROMPT_VERSION = "2026-10-02.2";
+export const PROMPT_VERSION = "2026-10-03.1";
 
 export type PromptVariant = "A" | "B";
 
@@ -25,7 +27,9 @@ const COMMON = `あなたは飲食店の経理書類を書き写す担当者で�
 - 通帳の取引行は、写っている行をすべて上から順に書き写す（印字のない空行は含めない）。
   - お預り金額の列 → deposit、お支払（お払戻）金額の列 → withdrawal、差引残高 → balance。
   - 行のそばにある手書きメモ（例: 「油入金」）は handwritten_note に書く。
-- 口座番号・口座名義・個人名は書き写さない（不要な個人情報のため）。
+- 「繰越」の行は description に「繰越」、残高だけを書き写し、日付が「**-**-**」のように伏せられていればそのまま書く。お預り欄に口座番号のような数字があっても書き写さない（deposit は empty）。
+- 摘要は印字のまま（例: "ATM" "ATM通帳" "預金機" "振込 PAYPAY" "決算利息"）。
+- 口座番号・口座名義・担当者名などの個人名は書き写さない（不要な個人情報のため）。
 
 # 書類の種類
 - 通帳＋レジ精算票 → document_type "sales_report"、register_report を埋め、oil_receipt は null。
@@ -43,9 +47,15 @@ const VARIANT_STEPS: Record<PromptVariant, string> = {
 3. 最後にレジ精算票（または受取書）を読み、書類の種類を判定する。`,
 };
 
-export function buildPrompt(variant: PromptVariant, depositLabel: string | null): string {
-  const label = depositLabel
-    ? `\n# レジ精算票の入金対象額\nregister_report.deposit_amount には「${depositLabel}」の項目の金額を書き写す。その項目が見つからなければ legibility を "not_visible" にする（ほかの項目で代用しない）。`
-    : `\n# レジ精算票の入金対象額\nregister_report.deposit_amount には「預入金」「入金額」など銀行に入金する金額と思われる項目を書き写し、deposit_amount_label にその項目名を印字のまま書く。`;
+export function buildPrompt(variant: PromptVariant, labels: ReceiptLabels | null): string {
+  const label = labels
+    ? `\n# レジ精算票の項目（この店舗の書式）
+- business_date: 「${labels.businessDate}」の日付部分だけ（時刻は含めない。期間の場合は開始日）
+- deposit_amount: 「${labels.deposit}」の金額。deposit_amount_label にはその項目名を印字のまま書く
+- cash_on_hand: 「${labels.cashOnHand}」の金額
+- next_day_float: 「${labels.nextDayFloat}」の金額
+- denominations: 「${labels.denominations}」の各金種の金額（枚数ではなく金額。「-」や空欄は "empty"）
+指定の項目が見つからなければ legibility を "not_visible" にする（ほかの項目で代用しない）。`
+    : `\n# レジ精算票の入金対象額\nregister_report.deposit_amount には「預入金」「銀行入金額」など銀行に入金する金額と思われる項目を書き写し、deposit_amount_label にその項目名を印字のまま書く。business_date は営業日の日付部分だけ（時刻は含めない）。`;
   return `${COMMON}\n${label}\n\n${VARIANT_STEPS[variant]}`;
 }

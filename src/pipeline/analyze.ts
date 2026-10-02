@@ -81,7 +81,7 @@ export async function analyzeImage(input: AnalyzeImageInput, extractors: Extract
   const store = getStore(cfg, input.claimedStoreId);
   const extractions = await Promise.all(
     extractors.map((e) =>
-      e.extract({ imageBase64: input.imageBase64, mediaType: input.mediaType, depositLabel: store.receipt.depositLabel }),
+      e.extract({ imageBase64: input.imageBase64, mediaType: input.mediaType, receiptLabels: store.receipt.labels }),
     ),
   );
   return analyzeExtractions(extractions, input.claimedStoreId, cfg, input.today);

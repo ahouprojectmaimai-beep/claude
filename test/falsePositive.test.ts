@@ -153,7 +153,7 @@ for (const sc of scenarios) {
 describe("設定による安全装置", () => {
   it("書式を登録した店舗にレジ精算票の検算がなければ設定エラー（起動しない）", () => {
     const raw = structuredClone(loadDefaultConfig()) as any;
-    raw.stores.find((s: any) => s.id === "kyodaimae").receipt.depositLabel = "預入金";
+    raw.stores.find((s: any) => s.id === "kyodaimae").receipt.checks = [];
     expect(() => parseConfig(raw)).toThrow(/検算/);
   });
   it("テスト用設定は明示的に許可したときだけ検算なしで動く", () => {
