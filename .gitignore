@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+.dev.vars
+# 実画像・実データ（銀行情報を含む）は絶対にコミットしない
+testdata/private/
+*.jpg
+*.jpeg
+*.png
+*.heic
