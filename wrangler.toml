@@ -1,0 +1,30 @@
+# Cloudflare Workers 設定（秘密情報はここに書かない。`wrangler secret put` で登録する）
+name = "ahou-deposit-check"
+main = "src/worker/index.ts"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ahou-deposit-check"
+database_id = "REPLACE_AFTER_CREATE"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "ahou-deposit-images"
+
+[[queues.producers]]
+binding = "EVENTS"
+queue = "ahou-line-events"
+
+[[queues.consumers]]
+queue = "ahou-line-events"
+max_batch_size = 5
+max_retries = 5
+
+[vars]
+# Botを招待した後、グループで「#グループID」と送って表示されたIDを設定する
+POST_GROUP_ID = ""
+REPORT_GROUP_ID = ""
+# 動作確認中は "true"（受付のたびに返信）。本番運用では "false"
+DEBUG_ACK = "true"
