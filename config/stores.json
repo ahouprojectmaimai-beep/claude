@@ -171,5 +171,19 @@
     "storeId": "doshisha",
     "maxRangeDays": 31,
     "clerkUserIds": []
+  },
+  "extraction": {
+    "$comment": "画像の読み取りに使うAI。2系統で独立に読み、一致したときだけ採用する。モデル比較(scripts/benchmark-models.ts)の結果で確定する（現在は暫定：安いモデル2つの組み合わせ）",
+    "passes": [
+      {
+        "model": "claude-haiku-4-5",
+        "variant": "A"
+      },
+      {
+        "model": "claude-sonnet-5-5",
+        "variant": "B",
+        "effort": "low"
+      }
+    ]
   }
 }

@@ -114,4 +114,6 @@ export interface ExtractionRecord {
   finishedAt: string;
   result: RawExtraction | null;
   error: string | null;
+  /** 料金計算用（API応答の usage） */
+  usage?: { inputTokens: number; outputTokens: number };
 }

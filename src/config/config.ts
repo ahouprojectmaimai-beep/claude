@@ -94,6 +94,18 @@ export const AppConfigSchema = z
       requireBalanceChain: z.boolean(),
       minFieldConfidence: z.number().min(0).max(1),
     }),
+    extraction: z.object({
+      /** 独立した読み取りの系統（2つ以上）。異なるモデル・プロンプトにすると誤読が重なりにくい */
+      passes: z
+        .array(
+          z.object({
+            model: z.string().min(1),
+            variant: z.enum(["A", "B"]),
+            effort: z.enum(["low", "medium", "high", "xhigh", "max"]).optional(),
+          }),
+        )
+        .min(2),
+    }),
     cashCheck: z.object({
       storeId: z.string(),
       maxRangeDays: z.number().int().positive(),

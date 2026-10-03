@@ -5,17 +5,17 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { extname, join } from "node:path";
-import { ClaudeExtractor } from "../src/extraction/claudeExtractor";
+import { extractorsFromConfig } from "../src/extraction/fromConfig";
 import type { ImageMediaType } from "../src/extraction/extractor";
 import { analyzeImage } from "../src/pipeline/analyze";
 import { cliArgs, loadConfig, printOutcome } from "./common";
 
-const args = cliArgs({ image: { type: "string" }, "save-dir": { type: "string" }, model: { type: "string" } });
+const args = cliArgs({ image: { type: "string" }, "save-dir": { type: "string" } });
 const storeId = String(args.store ?? "");
 const today = String(args.today ?? "");
 const image = String(args.image ?? "");
 if (!storeId || !today || !image) {
-  console.error("使い方: --store <店舗ID> --today YYYY-MM-DD --image <画像> [--save-dir testdata/private/out] [--model claude-opus-5-5]");
+  console.error("使い方: --store <店舗ID> --today YYYY-MM-DD --image <画像> [--save-dir testdata/private/out]");
   process.exit(1);
 }
 if (!process.env.ANTHROPIC_API_KEY) {
@@ -29,8 +29,7 @@ if (!mediaType) {
   process.exit(1);
 }
 const cfg = loadConfig(args.config as string | undefined);
-const model = (args.model as string | undefined) ?? "claude-opus-5-5";
-const extractors = [new ClaudeExtractor({ model, variant: "A" }), new ClaudeExtractor({ model, variant: "B" })];
+const extractors = extractorsFromConfig(cfg);
 const result = await analyzeImage({ imageBase64: readFileSync(image).toString("base64"), mediaType, claimedStoreId: storeId, today }, extractors, cfg);
 
 const saveDir = args["save-dir"] as string | undefined;
