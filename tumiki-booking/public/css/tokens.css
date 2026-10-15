@@ -1,0 +1,23 @@
+/* TUMIKI ブランドトークン — 色・形はここだけで定義し、予約画面/管理画面/メールで共通利用する。
+   ※ 現在の値は仮設定。公式ロゴ画像から抽出した色コードが確定したら、ここだけ差し替える。 */
+:root {
+  --c-main: #E8833A;        /* メインカラー（ボタン・見出しアクセント） */
+  --c-main-dark: #CF6E27;   /* ボタン押下・ホバー */
+  --c-main-soft: #FDEBDC;   /* メインの淡色（選択中の背景） */
+  --c-sub: #5FB3A1;         /* サブカラー（完了・成功） */
+  --c-sub-soft: #E3F3EF;
+  --c-accent: #F4C24B;      /* アクセント（積み木の黄色） */
+  --c-bg: #FBF7F0;          /* 背景色 */
+  --c-card: #FFFFFF;
+  --c-text: #3B3228;
+  --c-muted: #8A7B68;
+  --c-line: #EFE6D8;
+  --c-error: #D64545;
+  --c-error-soft: #FCE9E9;
+  --c-selected: var(--c-main);       /* 選択中の状態 */
+  --c-selected-text: #FFFFFF;
+  --radius: 16px;
+  --radius-s: 10px;
+  --shadow: 0 2px 12px rgba(80, 55, 20, .07);
+  --font: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+}

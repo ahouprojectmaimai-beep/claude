@@ -1,0 +1,26 @@
+# Cloudflare Workers 設定（秘密情報はここに書かない。`wrangler secret put` で登録する → docs/SETUP.md）
+name = "tumiki-booking"
+main = "src/worker/index.ts"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./public"
+html_handling = "auto-trailing-slash"
+not_found_handling = "none"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tumiki-booking"
+database_id = "8a884d47-afca-4d14-a27e-7ae652d53393"
+migrations_dir = "migrations"
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+[vars]
+# 公開URL（末尾スラッシュなし）。独自ドメインを使う場合はそれに変更
+PUBLIC_BASE_URL = "https://tumiki-booking.ahouproject-maimai.workers.dev"
+# メール送信方法: "gmail"（無料・ドメイン不要。連携したGoogleアカウントから送信）または "resend"（独自ドメインが必要）
+MAIL_PROVIDER = "gmail"
+# Resend利用時のみ必要: MAIL_FROM = "TUMIKI <booking@your-domain>"
