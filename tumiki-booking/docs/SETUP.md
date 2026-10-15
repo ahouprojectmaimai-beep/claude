@@ -1,3 +1,16 @@
+# 0円で公開する構成（推奨）
+| 要素 | 使うもの | 費用 |
+|---|---|---|
+| 公開URL | Cloudflare標準の `xxx.workers.dev`（HTTPS付き） | 0円 |
+| 実行・DB・定期処理 | Cloudflare Workers / D1 / Cron（無料枠） | 0円 |
+| カレンダー | Google Calendar API | 0円 |
+| メール | Gmail送信（`MAIL_PROVIDER="gmail"`、既定） | 0円 |
+
+無料枠の目安: Workers 1日10万リクエスト、D1 5GB。この予約システムの規模なら十分に収まります。
+独自ドメインやResendを使う場合のみ費用が発生します（任意）。
+
+CLI（wrangler）が使えない場合は、Cloudflareダッシュボードの「Workers & Pages → Create → GitHubに接続」でも公開できます（ルートディレクトリは `tumiki-booking`）。
+
 # セットアップ手順（初回のみ・約30分）
 
 ## 1. Google側の準備（Google Cloud Console）
@@ -20,14 +33,13 @@ npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put ENCRYPTION_KEY       # ランダムな長い文字列（OAuthトークン暗号化用）
 npx wrangler secret put SESSION_SECRET       # 別のランダムな長い文字列（ログインCookie署名用）
-npx wrangler secret put RESEND_API_KEY       # Resend利用時
 ```
 `wrangler.toml` の `PUBLIC_BASE_URL` / `ADMIN_EMAIL` / `MAIL_FROM` を自分の値に変更 → `npm run deploy`
 （`openssl rand -base64 32` で乱数が作れます）
 
 ## 3. メール送信（どちらか）
-- **Resend（推奨）**: resend.com でドメイン認証 → APIキー → `MAIL_PROVIDER="resend"`, `MAIL_FROM="TUMIKI <booking@ドメイン>"`
-- **Gmail**: `MAIL_PROVIDER="gmail"` → 管理画面の「Gmail送信を許可する」。ドメイン不要だが送信元は管理者のGmailアドレス
+- **Gmail（0円・既定）**: 初回ログイン時にGmail送信も許可するだけ。送信元は管理者のGmailアドレス（1日500通まで）
+- **Resend（任意）**: `MAIL_PROVIDER="resend"` と `MAIL_FROM`、`RESEND_API_KEY`。独自ドメインが必要
 
 ## 4. 接続
 `https://<公開URL>/admin` を開き「Googleでログイン」→ カレンダーの許可。これで予約URL（`https://<公開URL>/`）が使えます。

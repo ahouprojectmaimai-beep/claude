@@ -23,6 +23,6 @@ crons = ["*/10 * * * *"]
 PUBLIC_BASE_URL = "https://tumiki-booking.REPLACE.workers.dev"
 # 管理画面に入れるGoogleアカウントのメール
 ADMIN_EMAIL = "REPLACE@example.com"
-# メール送信方法: "resend"（推奨・独自ドメイン）または "gmail"（連携したGoogleアカウントから送信）
-MAIL_PROVIDER = "resend"
-MAIL_FROM = "TUMIKI <booking@REPLACE.example>"
+# メール送信方法: "gmail"（無料・ドメイン不要。連携したGoogleアカウントから送信）または "resend"（独自ドメインが必要）
+MAIL_PROVIDER = "gmail"
+# Resend利用時のみ必要: MAIL_FROM = "TUMIKI <booking@your-domain>"
