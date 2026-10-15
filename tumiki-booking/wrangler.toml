@@ -21,8 +21,6 @@ crons = ["*/10 * * * *"]
 [vars]
 # 公開URL（末尾スラッシュなし）。独自ドメインを使う場合はそれに変更
 PUBLIC_BASE_URL = "https://tumiki-booking.ahouproject-maimai.workers.dev"
-# 管理画面に入れるGoogleアカウントのメール
-ADMIN_EMAIL = "REPLACE@example.com"
 # メール送信方法: "gmail"（無料・ドメイン不要。連携したGoogleアカウントから送信）または "resend"（独自ドメインが必要）
 MAIL_PROVIDER = "gmail"
 # Resend利用時のみ必要: MAIL_FROM = "TUMIKI <booking@your-domain>"

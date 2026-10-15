@@ -34,7 +34,7 @@ npx wrangler secret put GOOGLE_CLIENT_SECRET
 npx wrangler secret put ENCRYPTION_KEY       # ランダムな長い文字列（OAuthトークン暗号化用）
 npx wrangler secret put SESSION_SECRET       # 別のランダムな長い文字列（ログインCookie署名用）
 ```
-`wrangler.toml` の `PUBLIC_BASE_URL` / `ADMIN_EMAIL` / `MAIL_FROM` を自分の値に変更 → `npm run deploy`
+`wrangler.toml` の `PUBLIC_BASE_URL` を自分の値に変更し、`ADMIN_EMAIL`（管理者のGoogleメール）は秘密の値として登録 → `npm run deploy`
 （`openssl rand -base64 32` で乱数が作れます）
 
 ## 3. メール送信（どちらか）
